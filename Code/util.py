@@ -186,7 +186,7 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
                 'type': 'constant',
                 'radiance': {
                     'type': 'd65',
-                    'scale': 2.5
+                    'scale': 1.5
                 }
             }
         else:
@@ -257,20 +257,25 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
     return scene_ref
 
 
-def get_sensor(id_origin_y):
-    return mi.load_dict({
-        'type': 'orthographic',
+def get_sensor(id_origin_y=15):
+    # Creating a single sensor from top
+    cam_top = mi.load_dict({
+        'type': 'perspective',
+        'srf': {
+            'type': 'uniform',
+            'value': 1.0
+        },
         'to_world': mi.scalar_spectral.Transform4f.look_at(
-            origin=[0, id_origin_y, 0],
             target=[0, 0, 0],
-            up=[0, 0, 1]
-        ),
+            origin=[0, id_origin_y, 0],
+            up=[0, 0, 1]),
+        'fov': 75,
         'film': {
             'type': 'hdrfilm',
-            'width': 1024,
-            'height': 1024
+            'width': 1024, 'height': 1024,
         }
     })
+    return cam_top
 
 
 def get_l_model():  # model ID
