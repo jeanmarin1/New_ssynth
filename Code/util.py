@@ -14,7 +14,7 @@ def random_string(n=5):
 
 def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_reticular, random_fb_deep_blood, random_mel, random_lightName, IMAGE=True, verbose=True):
     
-    models_dir = r"C:/Users/marin/ssynth_new/data/" #Chemin à modifier
+    models_dir = r"../data/" #Chemin à modifier
 
     uniformScale = 1  # uniformly scale the models
     yOffset = -1.5  # this is to counter the y offset of the models in houdini which is not centered at 0.
@@ -36,6 +36,9 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
     # refractive index for epidermis between 1.42-1.44
     iorEpi = 1.43
 
+    # refractive index for blood = 1.36 for 680-930nm
+    iorBlood = 1.36
+
     # refractive index for hypodermis
     iorHypo = 1.44
 
@@ -52,10 +55,10 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
     if IMAGE:
         scene['epidermis'] = {
             'type': 'obj',
-            'filename': os.path.join(models_dir + 'OutputModels/1/',f"epidermis_{count:03d}.obj"),
+            'filename': os.path.join(models_dir + 'OutputModels/test/',f"epidermis_{count:03d}.obj"),
             'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
             'bsdf': {'type': 'roughdielectric',
-                     'alpha': 0.1,
+                     'alpha': 0.01,
                      'int_ior': iorEpi,
                      'ext_ior': 1.000277},
             'interior': {
@@ -74,7 +77,7 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
 
         scene['papillary'] = {
             'type': 'obj',
-            'filename': os.path.join (models_dir + 'OutputModels/1/', f"papillary_{count:03d}.obj"),
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"papillary_{count:03d}.obj"),
             'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
             'bsdf': {'type': 'roughdielectric',
                      'alpha': 0.01,
@@ -96,12 +99,12 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
 
         scene['upper_blood'] = {
             'type': 'obj',
-            'filename': os.path.join (models_dir + 'OutputModels/1/', f"upper_blood_{count:03d}.obj"),
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"upper_blood_{count:03d}.obj"),
             'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
             'bsdf': {'type': 'roughdielectric',
-                     'alpha': 0.01,
-                     'int_ior': iorDerm,
-                     'ext_ior': 1.000277},
+                    'alpha': 0.01,
+                    'int_ior': iorDerm,
+                    'ext_ior': 1.000277},
             'interior': {
                 'type': 'homogeneous',
                 'albedo': {
@@ -116,9 +119,32 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
             }
         }
 
+        scene['upper_blood_vascular'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"upper_blood_vascular_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorBlood,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_alb' + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_ext' + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        
         scene['reticular'] = {
             'type': 'obj',
-            'filename': os.path.join (models_dir + 'OutputModels/1/', f"reticular_{count:03d}.obj"),
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"reticular_{count:03d}.obj"),
             'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
             'bsdf': {'type': 'roughdielectric',
                      'alpha': 0.01,
@@ -138,14 +164,36 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
             }
         }
 
-        scene['deep_blood'] = {
+        scene['reticular_vascular'] = {
             'type': 'obj',
-            'filename': os.path.join (models_dir + 'OutputModels/1/', f"deep_blood_{count:03d}.obj"),
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"reticular_vascular_{count:03d}.obj"),
             'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
             'bsdf': {'type': 'roughdielectric',
-                     'alpha': 0.01,
-                     'int_ior': iorDerm,
-                     'ext_ior': 1.000277},
+                    'alpha': 0.01,
+                    'int_ior': iorBlood,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_alb' + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_ext' + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['deep_blood'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"deep_blood_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorDerm,
+                    'ext_ior': 1.000277},
             'interior': {
                 'type': 'homogeneous',
                 'albedo': {
@@ -160,9 +208,31 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
             }
         }
 
+        scene['deep_blood_vascular'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"deep_blood_vascular_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorBlood,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_alb' + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_ext' + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
         scene['subcutfat'] = {
             'type': 'obj',
-            'filename': os.path.join (models_dir + 'OutputModels/1/', f"hypodermis_{count:03d}.obj"),
+            'filename': os.path.join (models_dir + 'OutputModels/test/', f"hypodermis_{count:03d}.obj"),
             'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
             'bsdf': {'type': 'roughdielectric',
                      'alpha': 0.01,
@@ -215,7 +285,7 @@ def render_image(count, random_fB_papillary, random_fb_upper_blood, random_fb_re
 
         scene['epidermis'] = {
             'type': 'obj',
-            'filename': os.path.join(models_dir + 'OutputModels/1/',f"epidermis_{count:03d}.obj"),
+            'filename': os.path.join(models_dir + 'OutputModels/Vascular/',f"epidermis_{count:03d}.obj"),
             'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
             'bsdf': {'type': 'diffuse',
                      'reflectance': {
@@ -269,7 +339,7 @@ def get_sensor(id_origin_y=15):
             target=[0, 0, 0],
             origin=[0, id_origin_y, 0],
             up=[0, 0, 1]),
-        'fov': 75,
+        'fov': 25,
         'film': {
             'type': 'hdrfilm',
             'width': 1024, 'height': 1024,

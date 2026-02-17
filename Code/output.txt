@@ -1,0 +1,35 @@
+Hypodermis thickness = 3.608565834026226
+Papillary Dermis thickness = 0.2015829371011096
+Upper Blood Dermis thickness = 0.061638940957447784
+Reticular Dermis thickness = 0.9066110542114116
+Deep Blood Dermis thickness = 0.11879621435201634
+Epidermis thickness = 0.10280501935178907
+
+Hypodermis thickness = 3.2234900425985793
+Papillary Dermis thickness = 0.2560370957060748
+Upper Blood Dermis thickness = 0.06576638450878534
+Reticular Dermis thickness = 1.2794597788548976
+Deep Blood Dermis thickness = 0.08870988712062913
+Epidermis thickness = 0.08653681121103338
+
+Hypodermis thickness = 3.6067696930387103
+Papillary Dermis thickness = 0.20387929147312986
+Upper Blood Dermis thickness = 0.09256902962377121
+Reticular Dermis thickness = 0.9367663768540387
+Deep Blood Dermis thickness = 0.10600603155793925
+Epidermis thickness = 0.05400957745241114
+
+Hypodermis thickness = 3.4693572561752135
+Papillary Dermis thickness = 0.19894484052768796
+Upper Blood Dermis thickness = 0.09205097860825587
+Reticular Dermis thickness = 1.1328648144257472
+Deep Blood Dermis thickness = 0.07564771853442395
+Epidermis thickness = 0.03113439172867117
+
+Hypodermis thickness = 3.498670994344192
+Papillary Dermis thickness = 0.22090620422514892
+Upper Blood Dermis thickness = 0.09904974822830817
+Reticular Dermis thickness = 0.9323344095582409
+Deep Blood Dermis thickness = 0.10644134991970178
+Epidermis thickness = 0.1425972937244078
+

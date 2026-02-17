@@ -7,9 +7,9 @@ mi.set_variant('scalar_spectral')
 
 from matplotlib import pyplot as plt
 
-save_folder = '../data/OutputImages/Intermediate'
+save_folder = '../data/OutputImages/Quick'
 
-csv_save_name = '..\\data\\params_lists\\blood_model_intermediate.csv'
+csv_save_name = '..\\data\\params_lists\\blood_model_quick.csv'
 
 data_csv = pd.read_csv(csv_save_name)
 
@@ -19,7 +19,7 @@ data_csv = pd.read_csv(csv_save_name)
 cam_top = util.get_sensor(5)
 
 # boucle sur toutes les lignes du CSV
-for row in range(2817):
+for row in range(len(data_csv)):
 
     params = data_csv.iloc[row]
 
