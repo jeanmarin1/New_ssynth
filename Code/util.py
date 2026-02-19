@@ -431,3 +431,317 @@ def get_save_folder(saveDir, count, random_hair_model, random_mel, random_fB, ra
     folder += "/mi_" + mi_variant + "/"
     os.makedirs(folder, exist_ok=True)
     return folder
+
+def render_image_cardiac_cycle(count, vascular_time, random_fB_papillary, random_fb_upper_blood, random_fb_reticular, random_fb_deep_blood, random_mel, random_lightName, IMAGE=True, verbose=True):
+    
+    models_dir = r"../data/" #Chemin à modifier
+
+    uniformScale = 1  # uniformly scale the models
+    yOffset = -1.5  # this is to counter the y offset of the models in houdini which is not centered at 0.
+    # lesionOffset = -2.5 #0 is on skin surface. # for outout10k
+    roomSize = 20  # current skin size is 20x20x5mm, so the room should be large enough to fit the skin
+    xtScale = 0.1  # extinction scale. 1 unit in mitsuba/houdini = 1mm, and optical coefficients are in inverse cm
+
+    if verbose:
+        # hair_albedo is used
+        print("Model id = " + str(count))
+        print("Blood fraction of Papillary Dermis material = " + str(random_fB_papillary))
+        print("Blood fraction of Upper Blood Dermis material = " + str(random_fb_upper_blood))
+        print("Blood fraction of Reticular Dermis material = " + str(random_fb_reticular))
+        print("Blood fraction of Deep Blood Dermis material = " + str(random_fb_deep_blood))
+        print("Melanosome fraction of Epidermis material = " + str(random_mel))
+        print("Light name =  " + str(random_lightName))
+        print()
+
+    # refractive index for epidermis between 1.42-1.44
+    iorEpi = 1.43
+
+    # refractive index for blood = 1.36 for 680-930nm
+    iorBlood = 1.36
+
+    # refractive index for hypodermis
+    iorHypo = 1.44
+
+    # refractive index for dermis is wavelength-dependent, but cannot input spectrum for ior in bsdf
+    # therefore, will normalize to lambda = 500nm
+    A = 1.3696
+    B = 3916.8
+    C = 2558.8
+    iorDerm = A + (B / (500 ** 2)) + (C / (500 ** 4))
+
+    scene = {'type': 'scene',
+             'integrator': {'type': 'volpathmis','max_depth': 1000}}
+    
+    if IMAGE:
+        scene['epidermis'] = {
+            'type': 'obj',
+            'filename': os.path.join(models_dir + 'OutputModels/Cardiac_cycle/',f"epidermis_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                     'alpha': 0.01,
+                     'int_ior': iorEpi,
+                     'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + 'Materials/epidermis_alb_mel' + str(random_mel) + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + 'Materials/epidermis_ext_mel' + str(random_mel) + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['papillary'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"papillary_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                     'alpha': 0.01,
+                     'int_ior': iorDerm,
+                     'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/papillary_alb_fB{random_fB_papillary}.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/papillary_ext_fB{random_fB_papillary}.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['upper_blood'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"upper_blood_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorDerm,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/upper_blood_alb_fB{random_fb_upper_blood}_T{vascular_time:02d}.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/upper_blood_ext_fB{random_fb_upper_blood}_T{vascular_time:02d}.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['upper_blood_vascular'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"upper_blood_vascular_{count:03d}_T{vascular_time:02d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorBlood,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_alb' + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_ext' + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        
+        scene['reticular'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"reticular_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                     'alpha': 0.01,
+                     'int_ior': iorDerm,
+                     'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/reticular_alb_fB{random_fb_reticular}_T{vascular_time:02d}.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/reticular_ext_fB{random_fb_reticular}_T{vascular_time:02d}.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['reticular_vascular'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"reticular_vascular_{count:03d}_T{vascular_time:02d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorBlood,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_alb' + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_ext' + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['deep_blood'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"deep_blood_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorDerm,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/deep_blood_alb_fB{random_fb_deep_blood}_T{vascular_time:02d}.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/deep_blood_ext_fB{random_fb_deep_blood}_T{vascular_time:02d}.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['deep_blood_vascular'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"deep_blood_vascular_{count:03d}_T{vascular_time:02d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                    'alpha': 0.01,
+                    'int_ior': iorBlood,
+                    'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_alb' + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + f'Materials/blood_HbO2_ext' + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+
+        scene['subcutfat'] = {
+            'type': 'obj',
+            'filename': os.path.join (models_dir + 'OutputModels/Cardiac_cycle/', f"hypodermis_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'roughdielectric',
+                     'alpha': 0.01,
+                     'int_ior': iorHypo,
+                     'ext_ior': 1.000277},
+            'interior': {
+                'type': 'homogeneous',
+                'albedo': {
+                    'type': 'spectrum',
+                    'filename': models_dir + 'Materials/hypo_alb' + '.spd'
+                },
+                'sigma_t': {
+                    'type': 'spectrum',
+                    'filename': models_dir + 'Materials/hypo_ext' + '.spd'
+                },
+                'scale': xtScale
+            }
+        }
+        if random_lightName == 'diffuse':
+            scene['env_light'] = {
+                'type': 'constant',
+                'radiance': {
+                    'type': 'd65',
+                    'scale': 1.5
+                }
+            }
+        else:
+            scene['env_light'] = {
+                'type': 'envmap',
+                'filename': models_dir + 'hdri/' + random_lightName + '.exr',
+                'scale': 3
+            }
+
+        scene['wall_floor'] = {
+            'type': 'rectangle',
+            'to_world': mi.ScalarTransform4f.scale([roomSize, 1, roomSize]).translate([0, -roomSize, 0]).rotate(
+                [1, 0, 0], -90),
+            'bsdf': {
+                'type': 'twosided',
+                'material': {
+                    'type': 'diffuse',
+                    'reflectance': {
+                        'type': 'rgb',
+                        'value': 0.5
+                    }
+                }
+            }
+        }
+    else:
+
+        scene['epidermis'] = {
+            'type': 'obj',
+            'filename': os.path.join(models_dir + 'OutputModels/Vascular/',f"epidermis_{count:03d}.obj"),
+            'to_world': mi.ScalarTransform4f.scale(uniformScale).translate([0, yOffset, 0]).rotate([0, 0, 0], 0),
+            'bsdf': {'type': 'diffuse',
+                     'reflectance': {
+                         'type': 'rgb',
+                         'value': [0.0, 0.0, 0.0]
+                     }
+                     }
+        }
+        scene['shape_light'] = {
+            'type': 'rectangle',
+            'to_world': mi.ScalarTransform4f.scale([roomSize, 1, roomSize]).translate([0, roomSize, 0]).rotate(
+                [1, 0, 0], 90),
+            'emitter': {
+                'type': 'area',
+                'radiance': {
+                    'type': 'd65',
+                    'scale': 10
+                }
+            }
+        }
+        scene['wall_floor'] = {
+            'type': 'rectangle',
+            'to_world': mi.ScalarTransform4f.scale([roomSize, 1, roomSize]).translate([0, -roomSize, 0]).rotate(
+                [1, 0, 0], -90),
+            'bsdf': {
+                'type': 'twosided',
+                'material': {
+                    'type': 'diffuse',
+                    'reflectance': {
+                        'type': 'rgb',
+                        'value': [0.0, 0.0, 0.0]
+                    }
+                }
+            }
+        }
+
+
+    scene_ref = mi.load_dict(scene)
+    return scene_ref
